@@ -20,6 +20,7 @@ import string
 import os
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from google.cloud import firestore
 
 from utils.logging import logger
 
@@ -27,15 +28,38 @@ app = Flask(__name__)
 # Use environment variable for secret key in production, fallback for development
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
 
-# In-memory storage for demo purposes (use a database in production)
-calendars = {}
+# Initialize Firestore client
+db = firestore.Client()
+
+# Database helper functions
+def get_calendar(code):
+    """Get calendar data from Firestore"""
+    doc_ref = db.collection('calendars').document(code)
+    doc = doc_ref.get()
+    if doc.exists:
+        return doc.to_dict()
+    return None
+
+def save_calendar(code, data):
+    """Save calendar data to Firestore"""
+    doc_ref = db.collection('calendars').document(code)
+    doc_ref.set(data)
+
+def update_calendar(code, updates):
+    """Update specific fields in calendar"""
+    doc_ref = db.collection('calendars').document(code)
+    doc_ref.update(updates)
+
+def calendar_exists(code):
+    """Check if calendar exists in Firestore"""
+    return get_calendar(code) is not None
 
 
 def generate_calendar_code():
     """Generate a unique 6-character calendar code"""
     while True:
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        if code not in calendars:
+        if not calendar_exists(code):
             return code
 
 
@@ -61,18 +85,21 @@ def handle_landing():
         if not user_name:
             return render_template("landing.html", error="Name is required to join a calendar.")
         
-        # Check if calendar exists (for now, accept any 6-character code)
-        if calendar_code not in calendars:
-            calendars[calendar_code] = {
+        # Check if calendar exists, create if it doesn't
+        calendar_data = get_calendar(calendar_code)
+        if not calendar_data:
+            calendar_data = {
                 'title': f'Calendar {calendar_code}',
                 'users': [],
                 'availability': {},
                 'user_availability': {}
             }
+            save_calendar(calendar_code, calendar_data)
         
-        # Add user to calendar
-        if user_name not in calendars[calendar_code]['users']:
-            calendars[calendar_code]['users'].append(user_name)
+        # Add user to calendar if not already there
+        if user_name not in calendar_data['users']:
+            calendar_data['users'].append(user_name)
+            update_calendar(calendar_code, {'users': calendar_data['users']})
         
         # Store session data
         session['calendar_code'] = calendar_code
@@ -90,12 +117,13 @@ def handle_landing():
         
         # Generate new calendar
         calendar_code = generate_calendar_code()
-        calendars[calendar_code] = {
+        calendar_data = {
             'title': calendar_title or f'Calendar {calendar_code}',
             'users': [creator_name],
             'availability': {},
             'user_availability': {}
         }
+        save_calendar(calendar_code, calendar_data)
         
         # Store session data
         session['calendar_code'] = calendar_code
@@ -112,7 +140,8 @@ def calendar(code):
     """Main calendar page"""
     code = code.upper()
     
-    if code not in calendars:
+    calendar_data = get_calendar(code)
+    if not calendar_data:
         return redirect(url_for('landing'))
     
     # Use basic logging with custom fields
@@ -123,7 +152,7 @@ def calendar(code):
 
     return render_template("index.html", 
                          calendar_code=code,
-                         calendar_title=calendars[code]['title'],
+                         calendar_title=calendar_data['title'],
                          user_name=session.get('user_name', 'Guest'))
 
 
@@ -132,12 +161,13 @@ def calendar_created(code):
     """Calendar creation success page"""
     code = code.upper()
     
-    if code not in calendars:
+    calendar_data = get_calendar(code)
+    if not calendar_data:
         return redirect(url_for('landing'))
     
     return render_template("calendar_created.html", 
                          calendar_code=code,
-                         calendar_title=calendars[code]['title'],
+                         calendar_title=calendar_data['title'],
                          user_name=session.get('user_name', 'Guest'))
 
 
@@ -151,17 +181,21 @@ def submit_availability():
         availability = data.get('availability', {})
         
         # Validate inputs
-        if not calendar_code or calendar_code not in calendars:
+        calendar_data = get_calendar(calendar_code)
+        if not calendar_code or not calendar_data:
             return jsonify({'success': False, 'error': 'Invalid calendar code'})
         
         if not user_name:
             return jsonify({'success': False, 'error': 'User name is required'})
         
         # Store availability data
-        if 'user_availability' not in calendars[calendar_code]:
-            calendars[calendar_code]['user_availability'] = {}
+        if 'user_availability' not in calendar_data:
+            calendar_data['user_availability'] = {}
         
-        calendars[calendar_code]['user_availability'][user_name] = availability
+        calendar_data['user_availability'][user_name] = availability
+        
+        # Update the calendar in Firestore
+        update_calendar(calendar_code, {'user_availability': calendar_data['user_availability']})
         
         logger.info(f"Availability submitted for {user_name} in calendar {calendar_code}")
         
@@ -177,10 +211,10 @@ def view_availability(code):
     """View all submitted availability for a calendar"""
     code = code.upper()
     
-    if code not in calendars:
+    calendar_data = get_calendar(code)
+    if not calendar_data:
         return redirect(url_for('landing'))
     
-    calendar_data = calendars[code]
     user_availability = calendar_data.get('user_availability', {})
     
     return render_template("view_availability.html",
