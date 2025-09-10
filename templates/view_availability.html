@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Availability - {{ calendar_title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .calendar-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+            text-align: center;
+        }
+        .code {
+            font-family: 'Courier New', monospace;
+            background-color: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .user-section {
+            margin: 2rem 0;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .user-header {
+            background-color: #667eea;
+            color: white;
+            padding: 1rem;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .availability-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            padding: 1rem;
+        }
+        .availability-day {
+            padding: 0.5rem;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9rem;
+            border: 1px solid #ddd;
+        }
+        .available {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        .no-availability {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+            font-style: italic;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+        .back-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+            text-decoration: none;
+            color: white;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('calendar', code=calendar_code) }}" class="back-button">← Back to Calendar</a>
+        
+        <h1>{{ calendar_title }}</h1>
+        
+        <div class="calendar-info">
+            <p><strong>Calendar Code:</strong> <span class="code">{{ calendar_code }}</span></p>
+            <p>Share this code with team members to join this calendar</p>
+        </div>
+
+        {% if user_availability %}
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ user_availability|length }}</div>
+                    <div class="stat-label">Team Members</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ users|length }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+            </div>
+
+            {% for user_name, availability in user_availability.items() %}
+                <div class="user-section">
+                    <div class="user-header">
+                        {{ user_name }}
+                        {% if availability %}
+                            <span style="float: right; font-size: 0.9rem; opacity: 0.9;">
+                                {{ availability.values()|list|length }} days marked
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if availability %}
+                        <div class="availability-grid">
+                            {% for date, status in availability.items() %}
+                                <div class="availability-day {{ status }}">
+                                    <div style="font-weight: bold;">{{ date.split('-')[2] }}</div>
+                                    <div style="font-size: 0.8rem;">
+                                        {{ date.split('-')[1] }}/{{ date.split('-')[0] }}
+                                    </div>
+                                    <div style="font-size: 0.8rem; margin-top: 0.2rem;">
+                                        {% if status == 'available' %}
+                                            ✅ Available
+                                        {% elif status == 'unavailable' %}
+                                            ❌ Unavailable
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="no-availability">
+                            No availability submitted yet
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-availability">
+                <h3>No availability data yet</h3>
+                <p>Team members haven't submitted their availability yet.</p>
+                <p>Share the calendar code <strong>{{ calendar_code }}</strong> with your team to get started!</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

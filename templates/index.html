@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar - Hello World</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 1rem 0;
+        }
+        .calendar-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+        .calendar-info p {
+            margin: 0.5rem 0;
+            color: #555;
+        }
+        .code {
+            font-family: 'Courier New', monospace;
+            background-color: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .calendar {
+            margin-top: 2rem;
+        }
+        .calendar-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 1rem;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            background-color: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .calendar-day-header {
+            background-color: #4a90e2;
+            color: white;
+            padding: 10px 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .calendar-day {
+            background-color: white;
+            padding: 10px 5px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .calendar-day:hover {
+            background-color: #f0f8ff;
+        }
+        .calendar-day.other-month {
+            color: #ccc;
+            background-color: #f9f9f9;
+        }
+        .calendar-day.today {
+            background-color: #4a90e2;
+            color: white;
+            font-weight: bold;
+        }
+        .calendar-day.today:hover {
+            background-color: #357abd;
+        }
+        .calendar-day.available {
+            background-color: #4caf50;
+            color: white;
+            font-weight: bold;
+        }
+        .calendar-day.available:hover {
+            background-color: #45a049;
+        }
+        .calendar-day.unavailable {
+            background-color: #f44336;
+            color: white;
+            font-weight: bold;
+        }
+        .calendar-day.unavailable:hover {
+            background-color: #da190b;
+        }
+        .availability-status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .availability-status h3 {
+            margin: 0 0 0.5rem 0;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.available {
+            background-color: #4caf50;
+        }
+        .status-indicator.unavailable {
+            background-color: #f44336;
+        }
+        .instructions {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background-color: #e3f2fd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #1565c0;
+        }
+        .calendar-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .nav-button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        .nav-button:hover:not(:disabled) {
+            background-color: #357abd;
+        }
+        .nav-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .month-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #444;
+        }
+        .submit-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        .submit-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+        .submit-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .status-message {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+        }
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .view-link {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .view-link:hover {
+            background-color: #218838;
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ calendar_title }}</h1>
+        <div class="calendar-info">
+            <p><strong>Calendar Code:</strong> <span class="code" id="calendarCode">{{ calendar_code }}</span></p>
+            <p><strong>Welcome:</strong> <span id="userName">{{ user_name }}</span></p>
+        </div>
+        <div class="calendar">
+            <div class="calendar-navigation">
+                <button class="nav-button" id="prevMonth" onclick="previousMonth()">← Previous</button>
+                <div class="month-display" id="monthYear"></div>
+                <button class="nav-button" id="nextMonth" onclick="nextMonth()">Next →</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Calendar will be generated by JavaScript -->
+            </div>
+            
+            <div class="availability-status">
+                <h3>Availability Summary</h3>
+                <div id="availabilityStatus">
+                    <div class="status-item">
+                        <span class="status-indicator available"></span>
+                        Available: 0 days
+                    </div>
+                    <div class="status-item">
+                        <span class="status-indicator unavailable"></span>
+                        Unavailable: 0 days
+                    </div>
+                </div>
+                <button id="submitAvailability" class="submit-button" onclick="submitAvailability()" disabled>
+                    Mark some days to submit
+                </button>
+            </div>
+            
+            <div class="instructions">
+                <strong>How to use:</strong> Click on any day to cycle through availability states:
+                Normal → Available (Green) → Unavailable (Red) → Normal<br>
+                <strong>Navigation:</strong> Use Previous/Next buttons to view up to 2 months in advance<br>
+                <strong>Submit:</strong> Click the submit button to save your availability to the calendar
+            </div>
+            
+            <div style="margin-top: 1rem; text-align: center;">
+                <a href="{{ url_for('view_availability', code=calendar_code) }}" class="view-link">
+                    👥 View Everyone's Availability
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Created Successfully</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 4rem;
+            color: #4caf50;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 1rem 0;
+            font-size: 2rem;
+        }
+        .calendar-code {
+            background-color: #f8f9fa;
+            border: 2px dashed #4caf50;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4caf50;
+            letter-spacing: 0.3rem;
+        }
+        .instructions {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        .action-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+        .secondary-button {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .secondary-button:hover {
+            background: #667eea;
+            color: white;
+        }
+        .copy-button {
+            background: #4caf50;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+        }
+        .copy-button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Calendar Created!</h1>
+        <p>Hello <strong>{{ user_name }}</strong>! Your calendar "{{ calendar_title }}" has been created successfully.</p>
+        
+        <div class="calendar-code" id="calendarCode">{{ calendar_code }}</div>
+        
+        <div class="instructions">
+            <p><strong>Share this code with your team:</strong></p>
+            <p>Team members can use this 6-digit code to join your calendar and mark their availability.</p>
+        </div>
+        
+        <button class="action-button copy-button" onclick="copyCode()">📋 Copy Code</button>
+        
+        <div style="margin-top: 2rem;">
+            <a href="{{ url_for('calendar', code=calendar_code) }}" class="action-button">Start Planning 📅</a>
+            <a href="{{ url_for('landing') }}" class="action-button secondary-button">Create Another</a>
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            const code = document.getElementById('calendarCode').textContent;
+            navigator.clipboard.writeText(code).then(function() {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.background = '#2e7d32';
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.style.background = '#4caf50';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.background = '#2e7d32';
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.style.background = '#4caf50';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Availability - Welcome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+        .option-card {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .option-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+        .option-card.active {
+            border-color: #667eea;
+            background-color: #f0f4ff;
+        }
+        .option-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .option-description {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        .form-group {
+            margin: 1rem 0;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .hidden {
+            display: none;
+        }
+        .action-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+        .action-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .error-banner {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Calendar</h1>
+        <p class="subtitle">Coordinate availability with your team</p>
+        
+        {% if error %}
+            <div class="error-banner">
+                ❌ {{ error }}
+            </div>
+        {% endif %}
+        
+        <form id="calendarForm" method="POST">
+            <!-- Join Existing Calendar Option -->
+            <div class="option-card" id="joinOption" onclick="selectOption('join')">
+                <div class="icon">🔗</div>
+                <div class="option-title">Join Existing Calendar</div>
+                <div class="option-description">Enter a calendar code to join an existing availability calendar</div>
+                
+                <div id="joinForm" class="hidden">
+                    <div class="form-group">
+                        <label for="calendarCode">Calendar Code</label>
+                        <input type="text" id="calendarCode" name="calendar_code" placeholder="Enter 6-digit code" maxlength="6">
+                        <div class="error-message" id="codeError">Please enter a valid 6-digit code</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="userName">Your Name</label>
+                        <input type="text" id="userName" name="user_name" placeholder="Enter your name">
+                        <div class="error-message" id="nameError">Please enter your name</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Create New Calendar Option -->
+            <div class="option-card" id="createOption" onclick="selectOption('create')">
+                <div class="icon">✨</div>
+                <div class="option-title">Create New Calendar</div>
+                <div class="option-description">Start a new availability calendar and get a shareable code</div>
+                
+                <div id="createForm" class="hidden">
+                    <div class="form-group">
+                        <label for="creatorName">Your Name</label>
+                        <input type="text" id="creatorName" name="creator_name" placeholder="Enter your name">
+                        <div class="error-message" id="creatorError">Please enter your name</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="calendarTitle">Calendar Title (Optional)</label>
+                        <input type="text" id="calendarTitle" name="calendar_title" placeholder="e.g., Team Meeting Availability">
+                    </div>
+                </div>
+            </div>
+            
+            <input type="hidden" id="actionType" name="action" value="">
+            <button type="submit" class="action-button" id="submitButton" disabled>Select an Option</button>
+        </form>
+    </div>
+
+    <script>
+        let selectedOption = null;
+
+        function selectOption(option) {
+            // Reset previous selection
+            document.getElementById('joinOption').classList.remove('active');
+            document.getElementById('createOption').classList.remove('active');
+            document.getElementById('joinForm').classList.add('hidden');
+            document.getElementById('createForm').classList.add('hidden');
+            
+            // Set new selection
+            selectedOption = option;
+            document.getElementById('actionType').value = option;
+            
+            if (option === 'join') {
+                document.getElementById('joinOption').classList.add('active');
+                document.getElementById('joinForm').classList.remove('hidden');
+                document.getElementById('submitButton').textContent = 'Join Calendar';
+                document.getElementById('calendarCode').focus();
+            } else if (option === 'create') {
+                document.getElementById('createOption').classList.add('active');
+                document.getElementById('createForm').classList.remove('hidden');
+                document.getElementById('submitButton').textContent = 'Create Calendar';
+                document.getElementById('creatorName').focus();
+            }
+            
+            document.getElementById('submitButton').disabled = false;
+            clearErrors();
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('input').forEach(el => el.style.borderColor = '#e9ecef');
+        }
+
+        function showError(inputId, errorId, message) {
+            document.getElementById(inputId).style.borderColor = '#dc3545';
+            const errorEl = document.getElementById(errorId);
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+
+            if (selectedOption === 'join') {
+                const code = document.getElementById('calendarCode').value.trim();
+                const name = document.getElementById('userName').value.trim();
+                
+                if (!code || code.length !== 6 || !/^[A-Z0-9]+$/.test(code)) {
+                    showError('calendarCode', 'codeError', 'Please enter a valid 6-digit code');
+                    isValid = false;
+                }
+                
+                if (!name) {
+                    showError('userName', 'nameError', 'Please enter your name');
+                    isValid = false;
+                }
+            } else if (selectedOption === 'create') {
+                const name = document.getElementById('creatorName').value.trim();
+                
+                if (!name) {
+                    showError('creatorName', 'creatorError', 'Please enter your name');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+        // Format calendar code input
+        document.getElementById('calendarCode').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+
+        // Prevent input clicks from bubbling up to the option card
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all input fields and labels
+            const inputs = document.querySelectorAll('input, label');
+            
+            inputs.forEach(function(input) {
+                input.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent the click from bubbling up to the option card
+                });
+            });
+        });
+
+        // Form submission
+        document.getElementById('calendarForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!selectedOption) {
+                alert('Please select an option');
+                return;
+            }
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Submit the form
+            this.submit();
+        });
+    </script>
+</body>
+</html>
