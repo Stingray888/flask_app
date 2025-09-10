@@ -76,7 +76,7 @@ def handle_landing():
     
     if action == 'join':
         calendar_code = request.form.get('calendar_code', '').strip().upper()
-        user_name = request.form.get('user_name', '').strip()
+        user_name = request.form.get('user_name', '').strip().upper()
         
         # Validate inputs
         if not calendar_code or len(calendar_code) != 6:
@@ -106,10 +106,17 @@ def handle_landing():
         session['user_name'] = user_name
         
         logger.info(f"User {user_name} joined calendar {calendar_code}")
+        
+        # Check if user has existing availability data
+        user_availability = calendar_data.get('user_availability', {})
+        if user_name in user_availability:
+            # User exists with previous availability - redirect to calendar to update
+            logger.info(f"Existing user {user_name} rejoining calendar {calendar_code} to update availability")
+        
         return redirect(url_for('calendar', code=calendar_code))
     
     elif action == 'create':
-        creator_name = request.form.get('creator_name', '').strip()
+        creator_name = request.form.get('creator_name', '').strip().upper()
         calendar_title = request.form.get('calendar_title', '').strip()
         
         if not creator_name:
@@ -144,16 +151,21 @@ def calendar(code):
     if not calendar_data:
         return redirect(url_for('landing'))
     
+    # Get current user's existing availability
+    user_name = session.get('user_name', 'Guest')
+    user_availability = calendar_data.get('user_availability', {}).get(user_name, {})
+    
     # Use basic logging with custom fields
     logger.info(logField="custom-entry", arbitraryField="custom-entry")
 
     # https://cloud.google.com/run/docs/logging#correlate-logs
     logger.info("Child logger with trace Id.")
 
-    return render_template("index.html", 
+    return render_template("calendar_edit.html", 
                          calendar_code=code,
                          calendar_title=calendar_data['title'],
-                         user_name=session.get('user_name', 'Guest'))
+                         user_name=user_name,
+                         existing_availability=user_availability)
 
 
 @app.route("/created/<code>")
@@ -177,7 +189,7 @@ def submit_availability():
     try:
         data = request.get_json()
         calendar_code = data.get('calendar_code', '').upper()
-        user_name = data.get('user_name', '')
+        user_name = data.get('user_name', '').upper()
         availability = data.get('availability', {})
         
         # Validate inputs
@@ -204,6 +216,23 @@ def submit_availability():
     except Exception as e:
         logger.error(f"Error submitting availability: {str(e)}")
         return jsonify({'success': False, 'error': 'Server error occurred'})
+
+
+@app.route("/debug/<code>")
+def debug_calendar(code):
+    """Debug route to see raw calendar data"""
+    code = code.upper()
+    
+    calendar_data = get_calendar(code)
+    if not calendar_data:
+        return jsonify({'error': 'Calendar not found'})
+    
+    return jsonify({
+        'calendar_code': code,
+        'calendar_data': calendar_data,
+        'user_availability': calendar_data.get('user_availability', {}),
+        'users': calendar_data.get('users', [])
+    })
 
 
 @app.route("/view_availability/<code>")

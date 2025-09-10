@@ -285,6 +285,10 @@
         </div>
     </div>
 
+    <script>
+        // Pass existing availability data to JavaScript
+        window.existingAvailability = {{ existing_availability | tojson }};
+    </script>
     <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
 </body>
 </html>

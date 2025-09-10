@@ -5,6 +5,14 @@ let availabilityData = {};
 let currentCalendarMonth = new Date().getMonth();
 let currentCalendarYear = new Date().getFullYear();
 
+// Initialize with existing availability data if provided
+function initializeAvailability(existingData) {
+    if (existingData && typeof existingData === 'object') {
+        availabilityData = { ...existingData };
+        console.log('Loaded existing availability:', availabilityData);
+    }
+}
+
 function generateCalendar() {
     const today = new Date();
     const todayMonth = today.getMonth();
@@ -279,4 +287,11 @@ function showMessage(message, type) {
 }
 
 // Generate calendar when page loads
-document.addEventListener('DOMContentLoaded', generateCalendar);
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize with existing data if available
+    if (typeof window.existingAvailability !== 'undefined') {
+        initializeAvailability(window.existingAvailability);
+    }
+    generateCalendar();
+    updateStatusDisplay(); // Update status display with any loaded data
+});
